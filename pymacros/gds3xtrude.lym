@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<klayout-macro>
+ <description>Show 3D view of layout in OpenSCAD</description>
+ <version>0.0.1</version>
+ <category>pymacros</category>
+ <prolog/>
+ <epilog/>
+ <doc/>
+ <autorun>true</autorun>
+ <autorun-early>false</autorun-early>
+ <shortcut/>
+ <show-in-menu>false</show-in-menu>
+ <group-name/>
+ <menu-path/>
+ <interpreter>python</interpreter>
+ <dsl-interpreter-name/>
+ <text>import pya
+import tempfile
+import subprocess
+import sys
+
+try:
+  from gds3xtrude import render_scad_to_file
+except ImportError as e:
+  pya.MessageBox.warning("Error", "`gds3xtrude` python module not installed.\nPlease run: `pip3 install --user gds3xtrude`", pya.MessageBox.Ok)
+  exit()
+
+import logging
+logging.basicConfig(format='%(module)16s %(levelname)8s: %(message)s', level=logging.DEBUG)
+
+main_window = pya.Application.instance().main_window()
+
+# Remember previously executed script
+tech_file = None
+  
+def run_3d_view():
+
+  global tech_file
+
+  current_view = main_window.current_view()
+  if current_view is None:
+    pya.MessageBox.warning("Error", "No view open!", pya.MessageBox.Ok)
+    raise Exception("No view open!")
+  
+  cell_view = pya.CellView.active()
+  if cell_view is None:
+    pya.MessageBox.warning("Error", "No view open!", pya.MessageBox.Ok)
+    raise Exception("No view open!")
+  layout = cell_view.layout()
+  cell = cell_view.cell
+  
+  # Fetch layer colors from KLayout
+  color_map = dict()
+  for prop in current_view.each_layer():
+    idx = prop.source_layer
+    col = prop.eff_fill_color(True)
+    # Convert RGB
+    r = ((col &gt;&gt; 16) &amp; 0xff) / 255
+    g = ((col &gt;&gt;  8) &amp; 0xff) / 255
+    b = ((col &gt;&gt;  0) &amp; 0xff) / 255
+    color_map[idx] = (r, g, b)
+  
+  try:
+    previous_file = tech_file
+  except NameError:
+    previous_file = '.'
+  
+  # Load tech file.
+  path = pya.FileDialog.ask_open_file_name("Choose layer stack description file.", previous_file, "layer stack description (*.layerstack)")
+  
+  if path is not None:
+  
+    tech_file = path
+    
+    # Create temporary file for data transfer to OpenSCAD.
+    fp, temp_file = tempfile.mkstemp(suffix='.scad')
+    
+    # Convert only current view into a 3D model.
+    # TODO: make this optional
+    selection_microns = current_view.box()
+    selection = pya.Box(selection_microns * (1 / layout.dbu))
+    
+    try:
+      render_scad_to_file(layout, cell, tech_file, temp_file, 
+        approx_error=0, color_map = color_map, centered=True, scale_factor=1, selection_box=selection)
+      
+      # Run OpenSCAD
+      try:
+        ret = subprocess.Popen(['openscad', '--viewall', '--colorscheme=BeforeDawn', temp_file])
+      except FileNotFoundError as e:
+        print(e)
+        info = "Make sure 'openscad' is installed and in the current search path."
+        pya.MessageBox.warning("Error", info, pya.MessageBox.Ok)
+        raise Exception(info)
+    except ImportError as e:
+      print(e)
+      pya.MessageBox.warning("Error", 'See console output for more information.', pya.MessageBox.Ok)
+      
+
+menu_handler = pya.Action()
+menu_handler.title = "run script"
+menu_handler.on_triggered(run_3d_view)
+#menu_handler.shortcut = "Ctrl+Shift+3"
+      
+def initialize():
+  menu = main_window.menu()
+  menu.insert_separator('tools_menu.end', 'gds3xtrude')
+  menu.insert_menu('tools_menu.end', 'gds3xtrude_submenu', 'gds3xtrude')
+  menu.insert_item("tools_menu.gds3xtrude_submenu.end", "gds3xtrude_load", menu_handler)
+
+
+initialize()</text>
+</klayout-macro>
