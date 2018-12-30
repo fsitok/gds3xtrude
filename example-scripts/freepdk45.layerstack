@@ -1,0 +1,72 @@
+from gds3xtrude.include import layer
+
+# GDS2 layer numbers.
+
+# Layer numbers from FreePDK calibre/layer.inc. They don't match the layouts of the standard cells (?).
+# active = layer(1, 0)
+# pwell = layer(2, 0)
+# nwell = layer(3, 0)
+# nimplant = layer(4, 0)
+# pimplant = layer(5, 0)
+# vtg = layer(6, 0)
+# vth = layer(7, 0)
+# thkox = layer(8, 0)
+# poly = layer(9, 0)
+# contact = layer(10, 0)
+# metal1 = layer(11, 0)
+# via1 = layer(12, 0)
+# metal2 = layer(13, 0)
+# via2 = layer(14, 0)
+# metal3 = layer(15, 0)
+# via3 = layer(16, 0)
+# metal4 = layer(17, 0)
+# via4 = layer(18, 0)
+# metal5 = layer(19, 0)
+# via5 = layer(20, 0)
+# metal6 = layer(21, 0)
+# via6 = layer(22, 0)
+# metal7 = layer(23, 0)
+# via7 = layer(24, 0)
+# metal8 = layer(25, 0)
+# via8 = layer(26, 0)
+# metal9 = layer(27, 0)
+# via9 = layer(28, 0)
+# metal10 = layer(29, 0)
+# nodrc = layer(80, 0)
+# marker = layer(238, 0)
+
+nwell = layer(1)
+pwell = layer(2)
+nimplant = layer(7)
+pimplant = layer(8)
+poly = layer(15)
+contact = layer(16)
+metal1 = layer(21)
+via1 = layer(22)
+metal2 = layer(23)
+
+bulk = nwell-pimplant-nimplant + pwell-pimplant-nimplant
+
+# Set colors
+
+bulk.color = [0.4, 0.4, 0.4]
+
+pimplant.color = [0.9, 0.6, 0.6]
+nimplant.color = [0.9, 0.6, 0.9]
+
+poly.color = [0.8, 0.2, 0.2]
+metal1.color = [0.2, 0.2, 0.8]
+metal2.color = [0.2, 0.8, 0.2]
+
+# Define additional layers from boolean operation
+contact_to_silicon = contact - poly
+
+layerstack = [
+    (100, [pimplant, nimplant, bulk]),    # silicon
+    (10, contact_to_silicon),           # gate oxide
+    (20, [contact, poly]),          # poly-silicon
+    (200, contact),                 # metal1-poly contacts
+    (50, metal1),
+    (200, via1),
+    (50, metal2),
+]
