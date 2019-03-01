@@ -53,12 +53,13 @@ def run_3d_view():
   color_map = dict()
   for prop in current_view.each_layer():
     idx = prop.source_layer
+    data_type = prop.source_datatype
     col = prop.eff_fill_color(True)
     # Convert RGB
     r = ((col &gt;&gt; 16) &amp; 0xff) / 255
     g = ((col &gt;&gt;  8) &amp; 0xff) / 255
     b = ((col &gt;&gt;  0) &amp; 0xff) / 255
-    color_map[idx] = (r, g, b)
+    color_map[(idx, data_type)] = (r, g, b)
   
   try:
     previous_file = tech_file
