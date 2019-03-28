@@ -3,7 +3,7 @@
  <name>gds3xtrude</name>
  <token/>
  <hidden>false</hidden>
- <version>0.0.5</version>
+ <version>0.0.8</version>
  <api-version/>
  <title>gds3xtrude</title>
  <doc>A simple 3D layout viewer based on OpenSCAD.</doc>
