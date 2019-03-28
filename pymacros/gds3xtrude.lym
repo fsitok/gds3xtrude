@@ -20,9 +20,10 @@ import subprocess
 import sys
 
 try:
-  from gds3xtrude import render_scad_to_file
+  from gds3xtrude.openscad import render_scad_to_file
+  from gds3xtrude.types import Material
 except ImportError as e:
-  pya.MessageBox.warning("Error", "`gds3xtrude` python module not installed.\nPlease run: `pip3 install --user gds3xtrude`", pya.MessageBox.Ok)
+  pya.MessageBox.warning("Error", "`gds3xtrude` python module not installed (or not in the required version).\nPlease run: `pip3 install --upgrade --user gds3xtrude`", pya.MessageBox.Ok)
   exit()
 
 import logging
@@ -50,7 +51,7 @@ def run_3d_view():
   cell = cell_view.cell
   
   # Fetch layer colors from KLayout
-  color_map = dict()
+  material_map = dict()
   for prop in current_view.each_layer():
     idx = prop.source_layer
     data_type = prop.source_datatype
@@ -59,7 +60,8 @@ def run_3d_view():
     r = ((col &gt;&gt; 16) &amp; 0xff) / 255
     g = ((col &gt;&gt;  8) &amp; 0xff) / 255
     b = ((col &gt;&gt;  0) &amp; 0xff) / 255
-    color_map[(idx, data_type)] = (r, g, b)
+    mat = Material("{}/{}".format(idx, data_type), color=(r,g,b))
+    material_map[(idx, data_type)] = mat
   
   try:
     previous_file = tech_file
@@ -83,7 +85,7 @@ def run_3d_view():
     
     try:
       render_scad_to_file(layout, cell, tech_file, temp_file, 
-        approx_error=0, color_map = color_map, centered=True, scale_factor=1, selection_box=selection)
+        approx_error=0, material_map = material_map, centered=True, scale_factor=1, selection_box=selection)
       
       # Run OpenSCAD
       try:
